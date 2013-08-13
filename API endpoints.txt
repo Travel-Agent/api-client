@@ -1,0 +1,193 @@
+Order details:
+--------------
+URL: /api/v1/orders/%d
+Response: Order Object
+  An order will contain a full description of the specific order, including:
+  id, client_id (resource_owner_id), created_at, tasks_count, cost (a Cost object), tasks (Array of Task objects), statuses(Array of Status objects)
+
+Sample Response:
+{
+  id: 1, client_id: 3, created_at: '2013-01-01T12:00:00Z',
+  tasks_count: 2,
+  cost: {
+    credits: 10, usd: 20, ils: 76.6
+  }
+  tasks: [
+    {
+      id: 1000, display_id: '1-1', service_id: 1, language_id: 1, language_slug: 'en',
+      updated_at: '2013-01-01T12:00:00Z', sla: 4,
+      guidelines: 'This guidelines only exists in Content Article',
+      cost : {
+        credits: 5, usd: 10, ils: 38.3
+      },
+      identity : {
+        id: 10, name: 'Identity 1', description: ''
+      },
+      task_items : [
+        { id: 2000, headline: 'Headline', words: 300, style: 2, comment: '' },
+        { id: 2001, headline: 'Headline', words: 300, style: 2, comment: '' }
+      ]
+    },
+    {
+      id: 1001, display_id: '1-2', service_id: 6, language_id: 2, language_slug: 'he',
+      updated_at: '2013-01-01T12:00:00Z', sla: 2
+      cost : {
+        credits: 5, usd: 10, ils: 38.3
+      },
+      task_items : [
+        { id: 3000, url: 'http://url.com/, count: 5, anchor: 'Anchor' },
+        { id: 3001, url: 'http://url2.com/, count: 5, anchor: 'Anchor 2'}
+      ]
+    }    
+  ],
+  statuses: [
+    { status_id: 1, created_at: '2013-01-01T12:00:00Z', name: 'New' },
+    { status_id: 2, created_at: '2013-01-01T12:00:00Z', name: 'Assigned' },
+    { status_id: 3, created_at: '2013-01-01T12:00:00Z', name: 'Moderator Review' },
+    { status_id: 10, created_at: '2013-01-01T12:00:00Z', name: 'Finished' }
+  ]
+}
+
+
+
+
+
+Order results:
+--------------
+URL: /api/v1/orders/%d/results
+Response: Array of task results.
+          Each task result has an array of urls (most of the orders it will be a single url, but CAN be multiple).
+          These urls are links to back to the API, which redirect to the correct result file with the correct credentials
+
+Sample Response:
+[
+  { id: 1000, display_id: '1-1',
+    urls: [
+      'http://sandbox.servula.com/api/v1/orders/1/tasks/1000/result/2000',
+      'http://sandbox.servula.com/api/v1/orders/1/tasks/1000/result/2001'
+    ]
+  },
+  { id: 1001, display_id: '1-2',
+    urls: [
+      'http://sandbox.servula.com/api/v1/orders/1/tasks/1001/result/2002'
+    ]
+  }  
+]
+
+All Orders:
+-----------
+URL: /api/v1/orders
+Response: Array of Orders and their current status
+
+Sample Response:
+[
+  { id: 1, created_at: '2013-01-01T12:00:00Z', status: { status_id: 1, name: 'New' },
+  { id: 2, created_at: '2013-01-01T12:00:00Z', status: { status_id: 2, name: 'Assigned' },
+  { id: 3, created_at: '2013-01-01T12:00:00Z', status: { status_id: 3, name: 'Moderator Review' },
+  { id: 4, created_at: '2013-01-01T12:00:00Z', status: { status_id: 10, name: 'Finished' },
+]
+
+
+User details:
+URL: /api/v1/me
+Response: Object of user's details and defaults.
+          If that client is a user (most chances he is), adds a client object with current credits and projects (identities)
+
+Sample Response:
+{
+  id : 199,
+  name : 'shoshan',
+  email : 's@zefo.co.il',
+  created_at : '2013-01-01T12:00:00Z',
+  language : 'en',
+  currency : 'ils',
+  client : {
+    credits : 4841.61,
+    projects : [
+      { id : 72, name : 'TestProj', description : 'Project for testing', 'tasks_count': 1 }
+    ]
+  }
+}
+
+
+Redirection to Paypal:
+----------------------
+URL: /api/v1/credits/buy?credits=XXXX
+Get a correct url to send a user to paypal
+Returns a link and two types of params - a params array you can look at the variables and a ready-to-use params_as_data query string
+
+Params:
+  credits (required) : amount of credits to purchase
+  return_url         : specify a different url to return after a successful purchase (default is http://sandbox.servula.com/orders/checkout)
+  cancel_return_url  : specify a different url to return after a failed purchase (default is http://sandbox.servula.com/credits/plans)
+  currency_code      : uppercase code of currency (USD, ILS). (default is the user's currency)
+
+Sample Response:
+{
+  link: 'https://www.paypal.com/cgi-bin/webscr',
+  params: [
+    cmd: '_ext-enter',
+    redirect_cmd: '_xclick',
+    item_name: 'Credits',
+    quantity: 1,
+    amount: 1000
+    ...
+    ...
+  ],
+  params_as_data: 'cmd=_ext-enter&redirect_cmd=_xclick&item_name=Credits&quantity=1&amount=1000&...'
+}
+
+Details on specific objects:
+
+Cost object:
+A JSON object that has the number of credits, and their values in all the currencies available (currently, USD and ILS)
+All the numbers are considered floats, but can also be integers.
+
+Sample:
+{ credits: 5, usd: 10, ils: 38.3 }
+
+
+
+Task object:
+A JSON object representing a single task (always inside an order).
+Each task has a specific service, language, identity and cost.
+Each task can have (and most of them has) multiple task_items that are specific to that service.
+Example - for Content Article (service_id == 1), each task_item has a headline, words (count), style and an optional comment
+All of these parameters per task_item are specified in the services Excel file that was sent.
+
+Sample:
+{
+  id: 1000,           // real task id
+  display_id: '1-1',  // the displayed id is made of the Order id, dash, and a running index
+  service_id: 1, 
+  language_id: 1,
+  language_slug: 'en',  // two letters representation of the language (if you prefer)
+  updated_at: '2013-01-01T12:00:00Z', 
+  sla: 4,               // Number of days estimated to complete this task
+  guidelines: '',       // a string that the client can explain about the entire task (only valid in Content Article)
+  cost : {              // a Cost object
+    credits: 5, usd: 10, ils: 38.3
+  },
+  identity : {          // an Identity object (may be called Project)
+    id: 10, name: 'Identity 1', description: ''
+  },
+  task_items : [        // Array of task_items
+    { id: 2000, headline: 'Headline', words: 300, style: 2, comment: '' },
+    { id: 2001, headline: 'Headline', words: 300, style: 2, comment: '' }
+  ]
+}
+
+
+Identity object:
+A JSON object representing an identity (a.k.a Project).
+This is used to allow the client to sort his orders and give them meanings.
+
+Sample:
+{ id: 10, name: 'Identity 1', description: '' }
+
+
+Status object:
+Specifies when an object (order or task) has changed status.
+
+Sample:
+{ status_id: 1, created_at: '2013-01-01T12:00:00Z', name: 'New' }

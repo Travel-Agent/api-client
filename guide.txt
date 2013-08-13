@@ -1,0 +1,72 @@
+Sample Client's parameters:
+  ID:     21dcd1f3b33b678aa54d0e1f1dd0a184471a62f19f853bbb99db4f0926e8ace0
+  Secret: f596123587b5478406a5163e01fd2c75e3002b458037d8ffb72c6556aafeca28
+
+Send a user to authorize access to Zefo
+
+URL: http://localhost:3000/oauth/authorize
+Params:
+  client_id     = 5362346a8da2460d708a8a33bebbe9e5d4ec6cbd8c4b8369fb3be4c7ffe554d2
+  redirect_uri  = urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob
+  response_type = code
+  scope         = readonly+write
+
+e.g.
+http://localhost:3000/oauth/authorize?client_id=5362346a8da2460d708a8a33bebbe9e5d4ec6cbd8c4b8369fb3be4c7ffe554d2&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&&response_type=code&scope=readonly+write 
+
+http://localhost:3000/oauth/authorize?client_id=21dcd1f3b33b678aa54d0e1f1dd0a184471a62f19f853bbb99db4f0926e8ace0&redirect_uri=http%3A%2F%2Fapi%2Fcallback&response_type=code&scope=readonly+write
+
+The user is then redirected back to [redirect_uri](http://api/callback) with these parameters:
+
+if user pressed Deny:
+  error             = access_denied
+  error_description = The+resource+owner+or+authorization+server+denied+the+request.
+
+if user pressed Authorize:
+  code  = 58fc09da44642b6dcdd2bdc425c208771823004971ab710b3410084e562a1e5b
+
+
+The client (Zefo) needs to save this code and assign it to the end user, and when it wants to act on its behalf, acquire an access token:
+URL: http://localhost:3000/oauth/token
+Method: POST
+Params:
+  client_id     = 21dcd1f3b33b678aa54d0e1f1dd0a184471a62f19f853bbb99db4f0926e8ace0
+  client_secret = f596123587b5478406a5163e01fd2c75e3002b458037d8ffb72c6556aafeca28
+  code          = 58fc09da44642b6dcdd2bdc425c208771823004971ab710b3410084e562a1e5b
+  grant_type    = authorization_code
+  redirect_uri  = http://api/callback
+  
+e.g.:
+curl http://localhost:3000/oauth/token \
+  -d "client_id=21dcd1f3b33b678aa54d0e1f1dd0a184471a62f19f853bbb99db4f0926e8ace0" \
+  -d "client_secret=f596123587b5478406a5163e01fd2c75e3002b458037d8ffb72c6556aafeca28" \
+  -d "code=5f80e70bba978272b9f073adb64a842667b8d2f7daac41ab6046ff49a4c149ce" \
+  -d "grant_type=authorization_code" \
+  -d "redirect_uri=http://api/callback"
+
+Response:
+{
+  "access_token"  : "b0b10f4955322a5f22e9753ffd3bbb2bf1965c41223b6da8f0e302054f79c3b6",
+  "token_type"    : "bearer",
+  "expires_in"    : 7200,
+  "refresh_token" : "fa406c1645ba485986e67ce0fbe173fbc21cf3b7149c28d298d03783cfb423c4",
+  "scope"         : "readonly write"
+}
+
+Now all the requests that are made, you can use that access_token (valid for 2 hours)
+e.g. http://localhost:3000/api/v1/me?access_token=b0b10f4955322a5f22e9753ffd3bbb2bf1965c41223b6da8f0e302054f79c3b6
+
+
+
+ce8b2ebde9b18c27216c3b92dd092ce1506965eaf93cd91d12be583320e4c0ae
+
+
+curl https://sandbox.servula.com/oauth/token \
+  -d "client_id=be6389b76ce418190f2b16e6f315745b45517089c0221a2a022731b9f06243c9" \
+  -d "client_secret=0e6e18c2de7deba8d0727eb49af47494eae8c6bd0e775cd41cb2620221c70c8f" \
+  -d "code=cd40cd7036c3752b4f7295c161cebfcaaa1b53e51033894a34cc26880c693330" \
+  -d "grant_type=authorization_code" \
+  -d "redirect_uri=http://api/callback"
+
+
+  curl https://sandbox.servula.com/oauth/token -d "client_id=be6389b76ce418190f2b16e6f315745b45517089c0221a2a022731b9f06243c9&client_secret=0e6e18c2de7deba8d0727eb49af47494eae8c6bd0e775cd41cb2620221c70c8f&code=cd40cd7036c3752b4f7295c161cebfcaaa1b53e51033894a34cc26880c693330&grant_type=authorization_code&redirect_uri=http://api/callback"
